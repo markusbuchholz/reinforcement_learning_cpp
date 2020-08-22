@@ -1,1 +1,1 @@
-# reinforcement learnining in c++
+# reinforcement learning in c++
