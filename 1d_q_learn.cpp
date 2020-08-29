@@ -8,12 +8,12 @@
 
 //========================================================================================
 
-int N_STATES = 6;       //number of states
-float EPSILON = 0.8;    // greedy policy
-float ALPHA = 0.1;      //learning rate
-float GAMMA = 0.9;      //discount factor
-int MAX_EPISODES = 15;  //number of episodes the agent is going to play
-int REFRESH_RATE = 300; //time for one move
+int N_STATES = 6;      //number of states
+double EPSILON = 0.9;   // greedy policy
+double ALPHA = 0.1;     //learning rate
+double GAMMA = 0.9;     //discount factor
+int MAX_EPISODES = 15; //number of episodes the agent is going to play
+int REFRESH_RATE = 20; //time for one move
 
 std::string a_left = "left";
 std::string a_right = "right";
@@ -34,7 +34,7 @@ auto Choose_Action(int state, std::vector<std::pair<double, double>> q_table)
 
     double rand_value = ((double)rand() / (RAND_MAX));
 
-    std::cout << ":: " << rand_value << std::endl;
+    std::cout << "rand value :: " << rand_value << std::endl;
 
     if ((rand_value > EPSILON) || ((value_state_1 == 0) && (value_state_2 == 0)))
     {
@@ -53,11 +53,11 @@ auto Choose_Action(int state, std::vector<std::pair<double, double>> q_table)
         std::cout << " follow the Explotation policy..." << std::endl;
         if (value_state_1 >= value_state_2)
         {
-            action = q_table[state].first;
+            action = "left"; //q_table[state].first;
         }
         else
         {
-            action = q_table[state + 1].first;
+            action = "right"; //q_table[state].first;
         }
     }
 
@@ -68,6 +68,8 @@ auto Choose_Action(int state, std::vector<std::pair<double, double>> q_table)
 
 void Update_Env(int state, int episode, int step_counter)
 {
+
+    //std::cout << "your current state ::" << state << std::endl;
 
     std::vector<std::string> env_temp;
 
@@ -127,7 +129,7 @@ auto Get_Env_Feedback(int state, std::string action)
 
     if (action == "right")
     {
-        if (state = N_STATES - 2)
+        if (state == (N_STATES - 2))
         {
             next_state = -999; //terminal
             reward = 1;
@@ -170,21 +172,33 @@ auto Run_Rl()
     int next_state{};
     int reward{};
     double q_target{};
+    double q_predict{};
     double q_value_next_state_action{};
 
     q_table = Build_Q_Table(N_STATES); //, ACTIONS);
 
-    for (auto &i : q_table)
-    {
+    // for (auto &i : q_table)
+    // {
 
-        std::cout << "state :: " << ijk << ":: action :: " << i.first << ":: value :: " << i.second << std::endl;
-        ijk++;
-    }
+    //     std::cout << "state :: " << ijk << ":: left :: " << i.first << ":: right :: " << i.second << std::endl;
+    //     ijk++;
+    // }
+
+    std::cout<<"check FOR Loop " << std::endl;
 
     for (int episode = 0; episode < MAX_EPISODES; episode++)
     {
+        std::cout << " TABLE UPDATE " << std::endl;
+        ijk = 0;
+        for (auto &i : q_table)
+        {
 
-        std::cout << "EPISODE NR ::: " << episode << std::endl;
+            std::cout << "state :: " << ijk << ":: left :: " << i.first << ":: right :: " << i.second << std::endl;
+            ijk++;
+        }
+        //std::cin.get();
+        
+        std::cout << "-------------------------------------------------------------EPISODE NR ::: " << episode << std::endl;
         step_counter = 0;
         state = 0;
         is_terminated = false;
@@ -194,20 +208,34 @@ auto Run_Rl()
         {
 
             action = Choose_Action(state, q_table);
+            std::cout << "STATE :: " << state << " NEXT ACTION ::: " << action << std::endl;
             return_vector = Get_Env_Feedback(state, action);
+
+            //==============
+            // q_predict = q_table.loc[S, A]
+
+            if (action == "left"){ q_predict = q_table[state].first;}
+            if (action == "right"){ q_predict = q_table[state].second;}
+
+
+            //=========
+
             next_state = return_vector[0];
             reward = return_vector[1];
+            std::cout << "NEXT STATE ::" << next_state << "  REWARD :: " << reward << std::endl;
 
-            if (q_table[next_state].first >= q_table[next_state].second)
-            {
-                q_value_next_state_action = q_table[next_state].first;
-            }
-            else
-            {
-                q_value_next_state_action = q_table[next_state].second;
-            }
+            // if (q_table[next_state].first >= q_table[next_state].second)
+            // {
+            //     q_value_next_state_action = q_table[next_state].first;
+            // }
+            // else
+            // {
+            //     q_value_next_state_action = q_table[next_state].second;
+            // }
+            q_value_next_state_action = std::max(q_table[next_state].first, q_table[next_state].second);
+            std::cout << " q_value_next_state_action :::::: " << q_value_next_state_action << std::endl;
 
-            if (next_state == -999) //terminal
+            if (next_state != -999) //terminal
             {
 
                 q_target = reward + GAMMA * q_value_next_state_action;
@@ -220,17 +248,20 @@ auto Run_Rl()
 
             if (action == "left")
             {
-
-                q_table[state].first = q_table[state].first + ALPHA * (q_target - q_value_next_state_action);
+                 
+                q_table[state].first = q_table[state].first + ALPHA * (q_target - q_predict);
+                std::cout<<"update for state:: "<< state << " and action :: " << action << " with value :: " << q_table[state].first << std::endl;
             }
 
             if (action == "right")
             {
-
-                q_table[state].second = q_table[state].second + ALPHA * (q_target - q_value_next_state_action);
+          
+                q_table[state].second = q_table[state].second + ALPHA * (q_target - q_predict);
+                std::cout<<"update for state:: "<< state << " and action :: " << action << " with value :: " << q_table[state].second << std::endl;
             }
 
             state = next_state;
+            //std::cout << "next state ::" << next_state << std::endl;
             Update_Env(state, episode, step_counter + 1);
         }
     }
@@ -244,9 +275,16 @@ auto Run_Rl()
 
 int main()
 {
-
+    int ij = 0;
     srand(time(NULL));
     q_table_main = Run_Rl();
     //Build_Q_Table(6);
+    std::cout<< " Q table " << std::endl;
+    for (auto &i : q_table_main){
+
+            std::cout << "state :: " << ij << ":: left :: " << i.first << ":: right :: " << i.second << std::endl;
+            ij++;
+
+    }
     return 0;
 }
