@@ -7,7 +7,7 @@
 #include <time.h>   //random
 
 
-
+//#include "opencv2/opencv.hpp"
 //========================================================================================
 
 int N_STATES = 6;      //number of states
@@ -93,8 +93,51 @@ void Update_Env(int state, int episode, int step_counter)
     std::this_thread::sleep_for(std::chrono::milliseconds(REFRESH_RATE));
 }
 //========================================================================================
+// void Update_Env_cv(int _state){
+
+// cv::Mat img(200, 1400, CV_8UC3);
+// img.setTo(0);
+
+// CvScalar robot = CV_RGB(0,0,255);
+// CvScalar terminal = CV_RGB(255,0,0);
+
+// int y1 = 10;
+// int y2 = 100;
+// int step = 110;
+// int state =4;
+
+// for (int i = 0; i<N_STATES; i++){
+
+//     //y1 = y1 + i*y1;
+//     //y2 = y2 + i*y2;
+    
+
+// //cv::rectangle(img, cv::Rect(y1, y1, y2, y2), CV_RGB(255, 0, 0), -100);
+// if ((i+1)==N_STATES){
+// cv::rectangle(img, cv::Rect(y1 + step*i, y1, y2, y2), terminal, -100);}
+
+// if (i == state){
+// cv::rectangle(img, cv::Rect(y1 + step*i, y1, y2, y2), robot, -100);}
+
+// else{
+//  cv::rectangle(img, cv::Rect(y1 + step*i, y1, y2, y2), CV_RGB(0,0,255), 3);   
+// }
+
+// }
+
+ 
 
 
+// cv::imshow("show000000", img);
+
+
+// }
+
+
+
+//========================================================================================
+
+//std::vector<std::pair<std::string, double>> Build_Q_Table(int n_states) //, std::vector<std::string> actions)
 auto Build_Q_Table(int n_states)
 {
     //std::vector<std::vector<std::pair<std::string, double>>> q_tab;
@@ -226,7 +269,14 @@ auto Run_Rl()
             reward = return_vector[1];
             std::cout << "NEXT STATE ::" << next_state << "  REWARD :: " << reward << std::endl;
 
-
+            // if (q_table[next_state].first >= q_table[next_state].second)
+            // {
+            //     q_value_next_state_action = q_table[next_state].first;
+            // }
+            // else
+            // {
+            //     q_value_next_state_action = q_table[next_state].second;
+            // }
             q_value_next_state_action = std::max(q_table[next_state].first, q_table[next_state].second);
             std::cout << " q_value_next_state_action :::::: " << q_value_next_state_action << std::endl;
 
@@ -256,8 +306,9 @@ auto Run_Rl()
             }
 
             state = next_state;
-         
+            //std::cout << "next state ::" << next_state << std::endl;
             Update_Env(state, episode, step_counter + 1);
+           // Update_Env_cv(state);
         }
     }
 
