@@ -8,14 +8,16 @@
 
 
 //#include "opencv2/opencv.hpp"
+#include "opencv2/highgui/highgui.hpp"
+#include "opencv2/video/tracking.hpp"
 //========================================================================================
 
-int N_STATES = 6;      //number of states
+int N_STATES = 10;      //number of states
 double EPSILON = 0.9;   // greedy policy
 double ALPHA = 0.1;     //learning rate
 double GAMMA = 0.9;     //discount factor
 int MAX_EPISODES = 15; //number of episodes the agent is going to play
-int REFRESH_RATE = 20; //time for one move
+int REFRESH_RATE = 50; //time for one move
 
 std::string a_left = "left";
 std::string a_right = "right";
@@ -93,51 +95,49 @@ void Update_Env(int state, int episode, int step_counter)
     std::this_thread::sleep_for(std::chrono::milliseconds(REFRESH_RATE));
 }
 //========================================================================================
-// void Update_Env_cv(int _state){
+void Update_Env_cv(int _state){
 
-// cv::Mat img(200, 1400, CV_8UC3);
-// img.setTo(0);
 
-// CvScalar robot = CV_RGB(0,0,255);
-// CvScalar terminal = CV_RGB(255,0,0);
+cv::Mat img(200, 1400, CV_8UC3);
+img.setTo(0);
 
-// int y1 = 10;
-// int y2 = 100;
-// int step = 110;
-// int state =4;
+CvScalar robot = CV_RGB(0,0,255);
+CvScalar terminal = CV_RGB(255,0,0);
 
-// for (int i = 0; i<N_STATES; i++){
+int y1 = 10;
+int y2 = 100;
+int step = 110;
+int state =_state;
 
-//     //y1 = y1 + i*y1;
-//     //y2 = y2 + i*y2;
-    
+for (int i = 0; i<N_STATES; i++){
 
-// //cv::rectangle(img, cv::Rect(y1, y1, y2, y2), CV_RGB(255, 0, 0), -100);
-// if ((i+1)==N_STATES){
-// cv::rectangle(img, cv::Rect(y1 + step*i, y1, y2, y2), terminal, -100);}
 
-// if (i == state){
-// cv::rectangle(img, cv::Rect(y1 + step*i, y1, y2, y2), robot, -100);}
+if ((i+1)==N_STATES){
+cv::rectangle(img, cv::Rect(y1 + step*i, y1, y2, y2), terminal, -100);}
 
-// else{
-//  cv::rectangle(img, cv::Rect(y1 + step*i, y1, y2, y2), CV_RGB(0,0,255), 3);   
-// }
+if (i == state){
+cv::rectangle(img, cv::Rect(y1 + step*i, y1, y2, y2), robot, -100);}
 
-// }
+else{
+ cv::rectangle(img, cv::Rect(y1 + step*i, y1, y2, y2), CV_RGB(0,0,255), 3);   
+}
+
+}
 
  
+cv::imshow("show performance", img);
+//std::this_thread::sleep_for(std::chrono::milliseconds(REFRESH_RATE));
+//std::this_thread::sleep_for(std::chrono::seconds(2));
+cv::waitKey(1);   
 
 
-// cv::imshow("show000000", img);
-
-
-// }
+}
 
 
 
 //========================================================================================
 
-//std::vector<std::pair<std::string, double>> Build_Q_Table(int n_states) //, std::vector<std::string> actions)
+
 auto Build_Q_Table(int n_states)
 {
     //std::vector<std::vector<std::pair<std::string, double>>> q_tab;
@@ -145,10 +145,9 @@ auto Build_Q_Table(int n_states)
 
     for (int i = 0; i < n_states; i++)
     {
-        //temp_map.insert(i, std::make_pair)
-        //temp_vector.push_back(std::make_pair("left", 0.0));
+
         q_tab.push_back(std::make_pair(0.0, 0.0));
-        //q_tab.push_back(temp_vector);
+ 
     }
 
     int state{0};
@@ -205,7 +204,7 @@ auto Get_Env_Feedback(int state, std::string action)
 }
 
 //========================================================================================
-//std::vector<std::pair<std::string, double>>
+
 auto Run_Rl()
 {
     int state{};
@@ -220,14 +219,9 @@ auto Run_Rl()
     double q_predict{};
     double q_value_next_state_action{};
 
-    q_table = Build_Q_Table(N_STATES); //, ACTIONS);
+    q_table = Build_Q_Table(N_STATES); 
 
-    // for (auto &i : q_table)
-    // {
 
-    //     std::cout << "state :: " << ijk << ":: left :: " << i.first << ":: right :: " << i.second << std::endl;
-    //     ijk++;
-    // }
 
     std::cout<<"check FOR Loop " << std::endl;
 
@@ -241,7 +235,7 @@ auto Run_Rl()
             std::cout << "state :: " << ijk << ":: left :: " << i.first << ":: right :: " << i.second << std::endl;
             ijk++;
         }
-        //std::cin.get();
+       
         
         std::cout << "-------------------------------------------------------------EPISODE NR ::: " << episode << std::endl;
         step_counter = 0;
@@ -256,27 +250,16 @@ auto Run_Rl()
             std::cout << "STATE :: " << state << " NEXT ACTION ::: " << action << std::endl;
             return_vector = Get_Env_Feedback(state, action);
 
-            //==============
-            // q_predict = q_table.loc[S, A]
 
             if (action == "left"){ q_predict = q_table[state].first;}
             if (action == "right"){ q_predict = q_table[state].second;}
 
 
-            //=========
-
             next_state = return_vector[0];
             reward = return_vector[1];
             std::cout << "NEXT STATE ::" << next_state << "  REWARD :: " << reward << std::endl;
 
-            // if (q_table[next_state].first >= q_table[next_state].second)
-            // {
-            //     q_value_next_state_action = q_table[next_state].first;
-            // }
-            // else
-            // {
-            //     q_value_next_state_action = q_table[next_state].second;
-            // }
+
             q_value_next_state_action = std::max(q_table[next_state].first, q_table[next_state].second);
             std::cout << " q_value_next_state_action :::::: " << q_value_next_state_action << std::endl;
 
@@ -308,7 +291,7 @@ auto Run_Rl()
             state = next_state;
             //std::cout << "next state ::" << next_state << std::endl;
             Update_Env(state, episode, step_counter + 1);
-           // Update_Env_cv(state);
+            Update_Env_cv(state);
         }
     }
 
